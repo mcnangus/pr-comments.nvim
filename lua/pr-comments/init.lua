@@ -1,19 +1,8 @@
 #!/usr/local/bin/lua
 
-local PR = nil
-local pr_cmd = "gh pr list --json number | jq '.[].number'"
-local out = io.popen(pr_cmd)
-if out then
-	PR = out:read("*l")
-else
-	error("No pull request number provided")
-end
+local M = {}
 
-if not PR then
-	return nil
-end
-
-local gh_pr_comments = function()
+local gh_pr_comments = function(pr)
 	local function gh_api(org, repo, cmd)
 		local gh_cmd = "gh api repos/" .. org .. "/" .. repo .. "/" .. cmd
 		local gh = io.popen(gh_cmd)
@@ -38,9 +27,43 @@ local gh_pr_comments = function()
 		org,
 		repo,
 		"pulls/"
-			.. PR
+			.. pr
 			.. '/comments | jq -r \'.[] | "\\(.path):\\(.line):\\(if has("in_reply_to_id") then "⤷" else "🗨" end) @\\(.user.login):  \\(.body)"\''
 	)
 end
 
-return gh_pr_comments()
+M.fetch = function()
+	local pr = nil
+	local pr_cmd = "gh pr list --json number | jq '.[].number'"
+	local out = io.popen(pr_cmd)
+	if out then
+		pr = out:read("*l")
+	else
+		error("No pull request number provided")
+	end
+
+	if not pr then
+		return nil
+	end
+
+	vim.diagnostic.reset(1)
+	vim.fn.setqflist({})
+
+	local buffer = gh_pr_comments(pr)
+
+	if buffer ~= nil then
+		for i in buffer:gmatch("([^\n]+)") do
+			vim.cmd('caddexpr "' .. i .. '"')
+		end
+		local qflist = vim.fn.getqflist()
+		local diagnostics = vim.diagnostic.fromqflist(qflist)
+
+		for _, diagnostic in ipairs(diagnostics) do
+			diagnostic.severity = vim.diagnostic.severity.INFO
+		end
+
+		vim.diagnostic.set(1, 0, diagnostics)
+	end
+end
+
+return M
