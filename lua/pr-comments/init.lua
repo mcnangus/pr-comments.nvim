@@ -52,9 +52,17 @@ M.fetch = function()
 	local buffer = gh_pr_comments(pr)
 
 	if buffer ~= nil then
-		for i in buffer:gmatch("([^\n]+)") do
-			vim.cmd('caddexpr "' .. i .. '"')
+		local current_file = vim.fn.expand("%:p")
+
+		for line in buffer:gmatch("([^\n]+)") do
+			local file, lineno = line:match("(.-):(%d+)")
+			if file and lineno then
+				if file == current_file then
+					vim.cmd('caddexpr "' .. line .. '"')
+				end
+			end
 		end
+
 		local qflist = vim.fn.getqflist()
 		local diagnostics = vim.diagnostic.fromqflist(qflist)
 
