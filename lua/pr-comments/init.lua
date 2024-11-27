@@ -2,17 +2,17 @@
 
 local M = {}
 
-local gh_pr_comments = function(pr)
-	local function gh_api(org, repo, cmd)
-		local gh_cmd = "gh api repos/" .. org .. "/" .. repo .. "/" .. cmd
-		local gh = io.popen(gh_cmd)
-		if gh then
-			return gh:read("*a")
-		else
-			error("gh not configured")
-		end
+local function gh_api(org, repo, cmd)
+	local gh_cmd = "gh api repos/" .. org .. "/" .. repo .. "/" .. cmd
+	local gh = io.popen(gh_cmd)
+	if gh then
+		return gh:read("*a")
+	else
+		error("gh not configured")
 	end
+end
 
+local gh_pr_comments = function(pr)
 	local remote = io.popen("git config --get remote.origin.url")
 	if not remote then
 		error("Not in a repo")
@@ -55,12 +55,13 @@ M.fetch = function()
 		local current_file = vim.fn.expand("%:p")
 
 		for line in buffer:gmatch("([^\n]+)") do
-			local file, lineno = line:match("(.-):(%d+)")
-			if file and lineno then
-				if file == current_file then
-					vim.cmd('caddexpr "' .. line .. '"')
-				end
-			end
+			-- local file, lineno = line:match("(.-):(%d+)")
+			-- if file and lineno then
+			-- 	if file == current_file then
+			-- 		vim.cmd('caddexpr "' .. line .. '"')
+			-- 	end
+			-- end
+			vim.cmd('caddexpr "' .. line .. '"')
 		end
 
 		local qflist = vim.fn.getqflist()
