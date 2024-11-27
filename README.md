@@ -1,6 +1,10 @@
 # pr-comments.nvim
 Use [lsp_lines](https://git.sr.ht/~whynothugo/lsp_lines.nvim) to load pr comments into neovim using vim quickfix list and diagnostics
 
+Example:
+
+![image](example.png)
+
 ## Requirements
 
 - Requires [gh](https://cli.github.com/), follow installation steps in the link.
