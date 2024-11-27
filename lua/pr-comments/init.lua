@@ -10,7 +10,7 @@ else
 end
 
 if not PR then
-	return {}
+	return nil
 end
 
 local gh_pr_comments = function()
