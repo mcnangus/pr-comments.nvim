@@ -2,30 +2,13 @@
 
 local M = {}
 
-local function gh_api(org, repo, cmd)
-	local gh_cmd = "gh api repos/" .. org .. "/" .. repo .. "/" .. cmd
-	local gh = io.popen(gh_cmd)
-	if gh then
-		return gh:read("*a")
-	else
-		error("gh not configured")
-	end
+local function gh_api(cmd)
+	local gh_cmd = "gh api repos/{owner}/{repo}/" .. cmd
+	return vim.system({ "bash", "-c", gh_cmd }):wait().stdout
 end
 
 local gh_pr_comments = function(pr)
-	local remote = io.popen("git config --get remote.origin.url")
-	if not remote then
-		error("Not in a repo")
-	end
-
-	local str = string.match(remote:read("*a"), "([^:]+)", 10)
-	local s = string.gmatch(str, "([^/]+)")
-	s()
-	local org = s()
-	local repo = string.match(s(), "([%a]+)%.git")
 	return gh_api(
-		org,
-		repo,
 		"pulls/"
 			.. pr
 			.. '/comments | jq -r \'.[] | "\\(.path):\\(.line):\\(if has("in_reply_to_id") then "⤷" else "🗨" end) @\\(.user.login):  \\(.body)"\''
@@ -50,6 +33,8 @@ M.fetch = function()
 	vim.fn.setqflist({})
 
 	local buffer = gh_pr_comments(pr)
+	vim.print(buffer)
+	return
 
 	if buffer ~= nil then
 		local current_file = vim.fn.expand("%:p")
