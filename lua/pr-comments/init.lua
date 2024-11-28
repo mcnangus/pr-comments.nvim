@@ -34,7 +34,9 @@ M.fetch = function()
 
 	local buffer = gh_pr_comments(pr)
 	vim.print(buffer)
-	return
+	if true then
+		return
+	end
 
 	if buffer ~= nil then
 		local current_file = vim.fn.expand("%:p")
