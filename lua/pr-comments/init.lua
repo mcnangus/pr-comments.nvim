@@ -8,10 +8,10 @@ local function gh_api(cmd)
 end
 
 local gh_pr_comments = function(pr)
-	return gh_api(
-		"pulls/"
-			.. pr
-			.. '/comments | jq -r \'.[] | "\\(.path):\\(.line):\\(if has("in_reply_to_id") then "⤷" else "🗨" end) @\\(.user.login):  \\(.body)"\''
+	return (
+		"gh api repos/{owner}/{repo}/pulls/"
+		.. pr
+		.. '/comments | jq -r \'.[] | "\\(.path):\\(.line):\\(if has("in_reply_to_id") then "⤷" else "🗨" end) @\\(.user.login):  \\(.body)"\''
 	)
 end
 
@@ -33,33 +33,15 @@ M.fetch = function()
 	vim.fn.setqflist({})
 
 	local buffer = gh_pr_comments(pr)
-	vim.print(buffer)
-	if true then
-		return
+	vim.cmd(string.format("cexpr system(%q)", buffer))
+
+	local qflist = vim.fn.getqflist()
+	local diagnostics = vim.diagnostic.fromqflist(qflist)
+	for _, diagnostic in ipairs(diagnostics) do
+		diagnostic.severity = vim.diagnostic.severity.INFO
 	end
 
-	if buffer ~= nil then
-		local current_file = vim.fn.expand("%:p")
-
-		for line in buffer:gmatch("([^\n]+)") do
-			-- local file, lineno = line:match("(.-):(%d+)")
-			-- if file and lineno then
-			-- 	if file == current_file then
-			-- 		vim.cmd('caddexpr "' .. line .. '"')
-			-- 	end
-			-- end
-			vim.cmd('caddexpr "' .. line .. '"')
-		end
-
-		local qflist = vim.fn.getqflist()
-		local diagnostics = vim.diagnostic.fromqflist(qflist)
-
-		for _, diagnostic in ipairs(diagnostics) do
-			diagnostic.severity = vim.diagnostic.severity.INFO
-		end
-
-		vim.diagnostic.set(1, 0, diagnostics)
-	end
+	vim.diagnostic.set(1, 0, diagnostics)
 end
 
 return M
